@@ -1,0 +1,14 @@
+{
+  "norpc": true,
+  "testCommand": "yarn test",
+  "compileCommand": "yarn compile",
+  "skipFiles": ["mocks", "testers"],
+  "configureYulOptimizer": true,
+  "providerOptions": {
+    "default_balance_ether": "10000000000000000000000000"
+  },
+  "mocha": {
+    "fgrep": "[skip-on-coverage]",
+    "invert": true
+  }
+}
