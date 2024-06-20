@@ -93,6 +93,7 @@ contract DepositVault is ManageableVault, IDepositVault {
         onlyGreenlisted(msg.sender)
         whenNotPaused
     {
+        require(amountUsdIn > 0, "DV: invalid amount");
         address user = msg.sender;
 
         _requireTokenExists(tokenIn);
@@ -103,7 +104,6 @@ contract DepositVault is ManageableVault, IDepositVault {
         if (!isFreeFromMinDeposit[user]) {
             _validateAmountUsdIn(user, amountUsdIn);
         }
-        require(amountUsdIn > 0, "DV: invalid amount");
 
         totalDeposited[user] += amountUsdIn;
         _tokenTransferFromUser(tokenIn, amountUsdIn);

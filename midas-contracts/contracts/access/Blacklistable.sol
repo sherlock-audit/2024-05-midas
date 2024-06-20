@@ -36,7 +36,7 @@ abstract contract Blacklistable is WithMidasAccessControl {
      * have BLACKLISTED_ROLE
      */
     function _onlyNotBlacklisted(address account)
-        private
+        internal
         view
         onlyNotRole(BLACKLISTED_ROLE, account)
     {}

@@ -64,7 +64,7 @@ export const deposit = async (
 
   const tokensReceiver = await depositVault.tokensReceiver();
 
-  const amountIn = parseUnits(amountUsdIn.toString());
+  const amountIn = parseUnits(amountUsdIn.toFixed(18).replace(/\.?0+$/, ''));
 
   if (opt?.revertMessage) {
     await expect(

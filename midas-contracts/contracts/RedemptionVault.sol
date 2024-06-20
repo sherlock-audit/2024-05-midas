@@ -37,7 +37,7 @@ contract RedemptionVault is ManageableVault, IRedemptionVault {
     /**
      * @dev leaving a storage gap for futures updates
      */
-    uint256[51] private __gap;
+    uint256[50] private __gap;
 
     /**
      * @notice upgradeable pattern contract`s initializer

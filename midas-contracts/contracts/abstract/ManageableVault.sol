@@ -52,6 +52,11 @@ abstract contract ManageableVault is Greenlistable, Pausable, IManageableVault {
     EnumerableSet.AddressSet internal _paymentTokens;
 
     /**
+     * @dev leaving a storage gap for futures updates
+     */
+    uint256[50] private __gap;
+
+    /**
      * @dev checks that msg.sender do have a vaultRole() role
      */
     modifier onlyVaultAdmin() {
@@ -149,10 +154,18 @@ abstract contract ManageableVault is Greenlistable, Pausable, IManageableVault {
      * @param amount amount of `token` to transfer from `user`
      */
     function _tokenTransferFromUser(address token, uint256 amount) internal {
+        uint256 tokenDecimals = _tokenDecimals(token);
+        uint256 transferAmount = amount.convertFromBase18(tokenDecimals);
+
+        require(
+            amount == transferAmount.convertToBase18(tokenDecimals),
+            "MV: invalid rounding"
+        );
+
         IERC20(token).safeTransferFrom(
             msg.sender,
             tokensReceiver,
-            amount.convertFromBase18(_tokenDecimals(token))
+            transferAmount
         );
     }
 

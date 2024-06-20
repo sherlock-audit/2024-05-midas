@@ -4,6 +4,8 @@ pragma solidity 0.8.9;
 import "../abstract/ManageableVault.sol";
 
 contract ManageableVaultTester is ManageableVault {
+    function _disableInitializers() internal override {}
+
     function initialize(
         address _accessControl,
         address _mTbill,
