@@ -91,13 +91,12 @@ contract mTBILL is ERC20PausableUpgradeable, Blacklistable, IMTbill {
         address from,
         address to,
         uint256 amount
-    )
-        internal
-        virtual
-        override(ERC20PausableUpgradeable)
-        onlyNotBlacklisted(from)
-        onlyNotBlacklisted(to)
-    {
+    ) internal virtual override(ERC20PausableUpgradeable) {
+        if (to != address(0)) {
+            _onlyNotBlacklisted(from);
+            _onlyNotBlacklisted(to);
+        }
+
         ERC20PausableUpgradeable._beforeTokenTransfer(from, to, amount);
     }
 }

@@ -24,6 +24,11 @@ abstract contract WithMidasAccessControl is
     MidasAccessControl public accessControl;
 
     /**
+     * @dev leaving a storage gap for futures updates
+     */
+    uint256[50] private __gap;
+
+    /**
      * @dev checks that given `address` have `role`
      */
     modifier onlyRole(bytes32 role, address account) {

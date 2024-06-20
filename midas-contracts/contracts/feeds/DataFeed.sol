@@ -24,16 +24,48 @@ contract DataFeed is WithMidasAccessControl, IDataFeed {
     /**
      * @dev healty difference between `block.timestamp` and `updatedAt` timestamps
      */
-    uint256 private constant _HEALTHY_DIFF = 3 days;
+    uint256 public healthyDiff;
+
+    /**
+     * @dev minimal answer expected to receive from the `aggregator`
+     */
+    int256 public minExpectedAnswer;
+
+    /**
+     * @dev maximal answer expected to receive from the `aggregator`
+     */
+    int256 public maxExpectedAnswer;
+
+    /**
+     * @dev leaving a storage gap for futures updates
+     */
+    uint256[50] private __gap;
 
     /**
      * @inheritdoc IDataFeed
      */
-    function initialize(address _ac, address _aggregator) external initializer {
+    function initialize(
+        address _ac,
+        address _aggregator,
+        uint256 _healthyDiff,
+        int256 _minExpectedAnswer,
+        int256 _maxExpectedAnswer
+    ) external initializer {
         require(_aggregator != address(0), "DF: invalid address");
+        require(_healthyDiff > 0, "DF: invalid diff");
+        require(_minExpectedAnswer > 0, "DF: invalid min exp. price");
+        require(_maxExpectedAnswer > 0, "DF: invalid max exp. price");
+        require(
+            _maxExpectedAnswer > _minExpectedAnswer,
+            "DF: invalid exp. prices"
+        );
 
         __WithMidasAccessControl_init(_ac);
         aggregator = AggregatorV3Interface(_aggregator);
+
+        healthyDiff = _healthyDiff;
+        minExpectedAnswer = _minExpectedAnswer;
+        maxExpectedAnswer = _maxExpectedAnswer;
     }
 
     /**
@@ -72,7 +104,9 @@ contract DataFeed is WithMidasAccessControl, IDataFeed {
         require(_answer > 0, "DF: feed is deprecated");
         require(
             // solhint-disable-next-line not-rely-on-time
-            block.timestamp - updatedAt <= _HEALTHY_DIFF,
+            block.timestamp - updatedAt <= healthyDiff &&
+                _answer >= minExpectedAnswer &&
+                _answer <= maxExpectedAnswer,
             "DF: feed is unhealthy"
         );
         roundId = _roundId;

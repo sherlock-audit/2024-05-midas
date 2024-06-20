@@ -26,6 +26,7 @@ abstract contract Pausable is WithMidasAccessControl, PausableUpgradeable {
      */
     // solhint-disable-next-line func-name-mixedcase
     function __Pausable_init(address _accessControl) internal onlyInitializing {
+        super.__Pausable_init();
         __WithMidasAccessControl_init(_accessControl);
     }
 

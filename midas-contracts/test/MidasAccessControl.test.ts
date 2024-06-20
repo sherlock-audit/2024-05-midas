@@ -1,5 +1,6 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { expect } from 'chai';
+import { constants } from 'ethers';
 import { ethers } from 'hardhat';
 
 import { defaultDeploy } from './common/fixtures';
@@ -31,6 +32,16 @@ describe('MidasAccessControl', function () {
     await expect(accessControl.initialize()).revertedWith(
       'Initializable: contract is already initialized',
     );
+  });
+
+  describe('grantRoleMult()', () => {
+    it('should fail: function is forbidden', async () => {
+      const { accessControl } = await loadFixture(defaultDeploy);
+
+      await expect(
+        accessControl.renounceRole(constants.HashZero, constants.AddressZero),
+      ).revertedWith('MAC: Forbidden');
+    });
   });
 
   describe('grantRoleMult()', () => {

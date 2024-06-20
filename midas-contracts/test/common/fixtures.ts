@@ -66,12 +66,21 @@ export const defaultDeploy = async () => {
   );
 
   const dataFeed = await new DataFeedTest__factory(owner).deploy();
-  await dataFeed.initialize(accessControl.address, mockedAggregator.address);
+  await dataFeed.initialize(
+    accessControl.address,
+    mockedAggregator.address,
+    3 * 24 * 3600,
+    parseUnits('0.1', mockedAggregatorDecimals),
+    parseUnits('10000', mockedAggregatorDecimals),
+  );
 
   const eurToUsdDataFeed = await new DataFeedTest__factory(owner).deploy();
   await eurToUsdDataFeed.initialize(
     accessControl.address,
     mockedAggregatorEur.address,
+    3 * 24 * 3600,
+    parseUnits('0.1', mockedAggregatorEurDecimals),
+    parseUnits('10000', mockedAggregatorEurDecimals),
   );
 
   const depositVault = await new DepositVaultTest__factory(owner).deploy();
@@ -218,6 +227,9 @@ export const defaultDeploy = async () => {
 
   const mockedDeprecatedAggregator =
     await new AggregatorV3DeprecatedMock__factory(owner).deploy();
+  const mockedDeprecatedAggregatorDecimals =
+    await mockedDeprecatedAggregator.decimals();
+
   await mockedDeprecatedAggregator.setRoundData(
     parseUnits('5', mockedAggregatorDecimals),
   );
@@ -229,10 +241,16 @@ export const defaultDeploy = async () => {
   await dataFeedDeprecated.initialize(
     accessControl.address,
     mockedDeprecatedAggregator.address,
+    3 * 24 * 3600,
+    parseUnits('0.1', mockedDeprecatedAggregatorDecimals),
+    parseUnits('10000', mockedDeprecatedAggregatorDecimals),
   );
 
   const mockedUnhealthyAggregator =
     await new AggregatorV3UnhealthyMock__factory(owner).deploy();
+  const mockedUnhealthyAggregatorDecimals =
+    await mockedUnhealthyAggregator.decimals();
+
   await mockedUnhealthyAggregator.setRoundData(
     parseUnits('5', mockedAggregatorDecimals),
   );
@@ -244,6 +262,9 @@ export const defaultDeploy = async () => {
   await dataFeedUnhealthy.initialize(
     accessControl.address,
     mockedUnhealthyAggregator.address,
+    3 * 24 * 3600,
+    parseUnits('0.1', mockedUnhealthyAggregatorDecimals),
+    parseUnits('10000', mockedUnhealthyAggregatorDecimals),
   );
 
   return {

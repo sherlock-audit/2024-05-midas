@@ -7,22 +7,66 @@ import { acErrors } from './common/ac.helpers';
 import { setRoundData } from './common/data-feed.helpers';
 import { defaultDeploy } from './common/fixtures';
 
+import {
+  // eslint-disable-next-line camelcase
+  DataFeedTest__factory,
+} from '../typechain-types';
+
 describe('DataFeed', function () {
   it('deployment', async () => {
-    const { dataFeed, mockedAggregator } = await loadFixture(defaultDeploy);
+    const { dataFeed, mockedAggregator, mockedAggregatorDecimals } =
+      await loadFixture(defaultDeploy);
 
     expect(await dataFeed.aggregator()).eq(mockedAggregator.address);
+    expect(await dataFeed.healthyDiff()).eq(3 * 24 * 3600);
+    expect(await dataFeed.minExpectedAnswer()).eq(
+      parseUnits('0.1', mockedAggregatorDecimals),
+    );
+    expect(await dataFeed.maxExpectedAnswer()).eq(
+      parseUnits('10000', mockedAggregatorDecimals),
+    );
   });
 
   it('initialize', async () => {
-    const { dataFeed } = await loadFixture(defaultDeploy);
+    const { dataFeed, owner } = await loadFixture(defaultDeploy);
 
     await expect(
       dataFeed.initialize(
         ethers.constants.AddressZero,
         ethers.constants.AddressZero,
+        0,
+        0,
+        0,
       ),
     ).revertedWith('Initializable: contract is already initialized');
+
+    const dataFeedNew = await new DataFeedTest__factory(owner).deploy();
+
+    await expect(
+      dataFeedNew.initialize(
+        ethers.constants.AddressZero,
+        ethers.constants.AddressZero,
+        0,
+        0,
+        0,
+      ),
+    ).revertedWith('DF: invalid address');
+
+    await expect(
+      dataFeedNew.initialize(dataFeedNew.address, dataFeedNew.address, 0, 0, 0),
+    ).revertedWith('DF: invalid diff');
+
+    await expect(
+      dataFeedNew.initialize(dataFeedNew.address, dataFeedNew.address, 1, 0, 0),
+    ).revertedWith('DF: invalid min exp. price');
+
+    await expect(
+      dataFeedNew.initialize(dataFeedNew.address, dataFeedNew.address, 1, 1, 0),
+    ).revertedWith('DF: invalid max exp. price');
+
+    await expect(
+      dataFeedNew.initialize(dataFeedNew.address, dataFeedNew.address, 1, 2, 1),
+    ).revertedWith('DF: invalid exp. prices');
   });
 
   describe('changeAggregator()', () => {
@@ -62,7 +106,7 @@ describe('DataFeed', function () {
 
     it('data in base18 conversion for 0.001$ price', async () => {
       const { dataFeed, mockedAggregator } = await loadFixture(defaultDeploy);
-      const price = '0.001';
+      const price = '1';
       await setRoundData({ mockedAggregator }, +price);
       expect(await dataFeed.getDataInBase18()).eq(parseUnits(price));
     });
@@ -77,8 +121,23 @@ describe('DataFeed Deprecated', function () {
 });
 
 describe('DataFeed Unhealthy', function () {
-  it('should fail when: feed is unhealthy', async () => {
+  it('should fail when: feed is unhealthy (by time)', async () => {
     const { dataFeedUnhealthy } = await loadFixture(defaultDeploy);
     await expect(dataFeedUnhealthy.getDataInBase18()).to.be.reverted;
+  });
+  it('should fail when: feed is unhealthy (by min answer)', async () => {
+    const { dataFeed, mockedAggregator } = await loadFixture(defaultDeploy);
+    await setRoundData({ mockedAggregator }, 0.1);
+    await expect(dataFeed.getDataInBase18()).to.be.not.reverted;
+    await setRoundData({ mockedAggregator }, 0.099);
+    await expect(dataFeed.getDataInBase18()).to.be.reverted;
+  });
+
+  it('should fail when: feed is unhealthy (by max answer)', async () => {
+    const { dataFeed, mockedAggregator } = await loadFixture(defaultDeploy);
+    await setRoundData({ mockedAggregator }, 10000);
+    await expect(dataFeed.getDataInBase18()).to.be.not.reverted;
+    await setRoundData({ mockedAggregator }, 10001);
+    await expect(dataFeed.getDataInBase18()).to.be.reverted;
   });
 });

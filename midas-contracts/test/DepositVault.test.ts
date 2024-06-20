@@ -46,34 +46,45 @@ describe('DepositVault', function () {
     );
   });
 
-  it('initialize()', async () => {
-    const { depositVault } = await loadFixture(defaultDeploy);
+  describe('initialization', () => {
+    it('should fail: cal; initialize() when already initialized', async () => {
+      const { depositVault } = await loadFixture(defaultDeploy);
 
-    await expect(
-      depositVault.initialize(
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero,
-        0,
-        ethers.constants.AddressZero,
-      ),
-    ).revertedWith('Initializable: contract is already initialized');
-  });
+      await expect(
+        depositVault.initialize(
+          ethers.constants.AddressZero,
+          ethers.constants.AddressZero,
+          ethers.constants.AddressZero,
+          0,
+          ethers.constants.AddressZero,
+        ),
+      ).revertedWith('Initializable: contract is already initialized');
+    });
 
-  it('onlyInitializing', async () => {
-    const { owner, accessControl, mTBILL, tokensReceiver } = await loadFixture(
-      defaultDeploy,
-    );
+    it('should fail: call with initializing == false', async () => {
+      const { owner, accessControl, mTBILL, tokensReceiver } =
+        await loadFixture(defaultDeploy);
 
-    const vault = await new ManageableVaultTester__factory(owner).deploy();
+      const vault = await new ManageableVaultTester__factory(owner).deploy();
 
-    await expect(
-      vault.initializeWithoutInitializer(
-        accessControl.address,
-        mTBILL.address,
-        tokensReceiver.address,
-      ),
-    ).revertedWith('Initializable: contract is not initializing');
+      await expect(
+        vault.initializeWithoutInitializer(
+          accessControl.address,
+          mTBILL.address,
+          tokensReceiver.address,
+        ),
+      ).revertedWith('Initializable: contract is not initializing');
+    });
+
+    it('should fail: when _tokensReceiver == address(this)', async () => {
+      const { owner, accessControl, mTBILL } = await loadFixture(defaultDeploy);
+
+      const vault = await new ManageableVaultTester__factory(owner).deploy();
+
+      await expect(
+        vault.initialize(accessControl.address, mTBILL.address, vault.address),
+      ).revertedWith('invalid address');
+    });
   });
 
   describe('setMinAmountToDeposit()', () => {
@@ -351,7 +362,7 @@ describe('DepositVault', function () {
         { accessControl, greenlistable: depositVault, owner },
         owner,
       );
-      await deposit({ depositVault, owner, mTBILL }, stableCoins.dai, 0, {
+      await deposit({ depositVault, owner, mTBILL }, stableCoins.dai, 1, {
         revertMessage: 'MV: token not exists',
       });
     });
@@ -370,6 +381,27 @@ describe('DepositVault', function () {
       await deposit({ depositVault, owner, mTBILL }, stableCoins.dai, 0, {
         revertMessage: 'DV: invalid amount',
       });
+    });
+
+    it('should fail: when rounding is invalid', async () => {
+      const { owner, depositVault, accessControl, stableCoins, mTBILL } =
+        await loadFixture(defaultDeploy);
+      await greenList(
+        { accessControl, greenlistable: depositVault, owner },
+        owner,
+      );
+      await addPaymentTokenTest(
+        { vault: depositVault, owner },
+        stableCoins.dai,
+      );
+      await deposit(
+        { depositVault, owner, mTBILL },
+        stableCoins.dai,
+        0.0000000001,
+        {
+          revertMessage: 'MV: invalid rounding',
+        },
+      );
     });
 
     it('should fail: call with insufficient allowance', async () => {

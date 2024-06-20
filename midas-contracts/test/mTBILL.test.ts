@@ -188,21 +188,6 @@ describe('mTBILL', function () {
       });
     });
 
-    it('should fail: burn(...) when address is blacklisted', async () => {
-      const { owner, mTBILL, regularAccounts, accessControl } =
-        await loadFixture(defaultDeploy);
-      const blacklisted = regularAccounts[0];
-
-      await mint({ mTBILL, owner }, blacklisted, 1);
-      await blackList(
-        { blacklistable: mTBILL, accessControl, owner },
-        blacklisted,
-      );
-      await burn({ mTBILL, owner }, blacklisted, 1, {
-        revertMessage: acErrors.WMAC_HAS_ROLE,
-      });
-    });
-
     it('should fail: transfer(...) when from address is blacklisted', async () => {
       const { owner, mTBILL, regularAccounts, accessControl } =
         await loadFixture(defaultDeploy);
@@ -277,6 +262,19 @@ describe('mTBILL', function () {
           .connect(caller)
           .transferFrom(from.address, blacklisted.address, 1),
       ).revertedWith(acErrors.WMAC_HAS_ROLE);
+    });
+
+    it('burn(...) when address is blacklisted', async () => {
+      const { owner, mTBILL, regularAccounts, accessControl } =
+        await loadFixture(defaultDeploy);
+      const blacklisted = regularAccounts[0];
+
+      await mint({ mTBILL, owner }, blacklisted, 1);
+      await blackList(
+        { blacklistable: mTBILL, accessControl, owner },
+        blacklisted,
+      );
+      await burn({ mTBILL, owner }, blacklisted, 1);
     });
 
     it('transferFrom(...) when caller address is blacklisted', async () => {
